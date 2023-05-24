@@ -1,24 +1,27 @@
 class CartsController < ApplicationController
-    def index
+    before_action :cart_params
 
+    def index
+        @carts = Cart.all
+        render json: @carts, status: :ok
     end
 
     def create
-        @cart = Cart.new
-        if @cart.save
-            render json: {message: 'cart created'}, status: :ok
-        end
     end
 
     def show
-        
     end
 
     def update
-
     end
 
     def destroy
-
     end
+
+    protected
+    def cart_params
+        params.permit(:user_id)
+    end
+
+
 end

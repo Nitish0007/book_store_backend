@@ -1,7 +1,7 @@
 class UsersController < ApplicationController
     include Rails.application.routes.url_helpers
     # skip_before_action :authenticate_request, only: [:index, :create, :show]
-    before_action :set_user, only: [:show, :destroy]
+    before_action :set_user, only: [:show, :destroy, :get_cart, :get_order_list]
 
     # before_action :authenticate_admin_request, only: [:index, :destroy, :update]
 
@@ -15,11 +15,11 @@ class UsersController < ApplicationController
     # post method to create new user
     # route - {url}/users
     def create
-        @user = User.new(user_params)
-        if @user.save
-            render json: @user, status: :ok
-        else
-            render json: {message: @user.errors.full_messages}, status: :unprocessable_entity
+        @user = User.create(user_params)
+        if create_dependencies
+                render json: @user, status: :ok
+            else
+                render json: {message: @user.errors.full_messages}, status: :unprocessable_entity
         end
     end
 
@@ -45,6 +45,16 @@ class UsersController < ApplicationController
         end
     end
 
+    def get_cart
+        cart = @user.cart
+        render json: cart, status: :ok
+    end
+
+    def get_order_list
+        order_list = @user.order_list
+        render json: order_list, status: :ok
+    end
+
 
     private
     # setting user params 
@@ -57,17 +67,10 @@ class UsersController < ApplicationController
         @user = User.find(params[:id])
     end
 
-    # def create_dependencies
-    #     cart = Cart.create
-    #     params[:cart_id] = cart.id
-    #     order_list = OrderList.create
-    #     params[:order_list_id] = order_list.id
-    # end
-
-    # def delete_dependencies
-    #     # cart = Cart.find(params[:cart_id])
-    #     # cart.destroy
-    #     order_list = OrderList.find(@user.order_list_id)
-    #     order_list.destroy
-    # end
+    def create_dependencies
+        @cart = Cart.new(user_id: @user.id)
+        @cart.save
+        @order_list = OrderList.new(user_id: @user.id)
+        @order_list.save
+    end
 end
