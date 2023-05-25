@@ -1,9 +1,6 @@
 class UsersController < ApplicationController
-    include Rails.application.routes.url_helpers
-    # skip_before_action :authenticate_request, only: [:index, :create, :show]
+    skip_before_action :authenticate_request, only: [:index, :create, :show]
     before_action :set_user, only: [:show, :destroy, :get_cart, :get_order_list]
-
-    # before_action :authenticate_admin_request, only: [:index, :destroy, :update]
 
     # get method to fetch all the users from the database
     # route - {url}/users
@@ -16,10 +13,11 @@ class UsersController < ApplicationController
     # route - {url}/users
     def create
         @user = User.create(user_params)
+        token = jwt_encode(user_id: @user.id)
         if create_dependencies
-                render json: @user, status: :ok
-            else
-                render json: {message: @user.errors.full_messages}, status: :unprocessable_entity
+            render json: {user: @user, token: token}, status: :ok
+        else
+            render json: {message: @user.errors.full_messages}, status: :unprocessable_entity
         end
     end
 

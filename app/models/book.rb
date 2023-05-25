@@ -1,6 +1,5 @@
 class Book < ApplicationRecord
-    belongs_to :order
-
+    has_many :orders
     validates :name, :author, :price , presence: true
     validates :name, uniqueness: true
 end

@@ -1,7 +1,7 @@
 class BooksController < ApplicationController
-    # before_action :authenticate_request, except: [:index, :show]
+    before_action :authenticate_request, except: [:index, :show]
     
-    before_action :book_params
+    before_action :book_params, only: :create
     before_action :set_book, only: [:show, :destroy, :update]
 
     def index
@@ -14,7 +14,7 @@ class BooksController < ApplicationController
         if @book.save
             render json: @book, status: :ok
         else
-            rendor json: {message: 'unable to store'}, status: :unprocessable_entity
+            render json: {message: @book.errors.full_messages}, status: :unprocessable_entity
         end
     end
 
@@ -27,13 +27,28 @@ class BooksController < ApplicationController
     end
 
     def destroy
-
+        if @book.destroy
+            render json: {message: 'book deleted from the database'}, status: :ok
+        end
     end
+
+    def add_to_cart
+        book = Book.find(params[:book_id])
+        order = Order.new({book_id: book.id, book_name: book.name, price: book.price, quantity: 1, total: book.price, placed: false, user_id: @current_user.id})
+        order.cart = @current_user.cart
+        if order.save
+            render json: {order: order, message: 'order created'}, status: :ok
+        else
+            render json: {message: order.errors.full_messages}, status: :unprocessable_entity
+        end
+    end
+
+    
 
 
     protected
     def book_params
-        params.permit(:name, :author, :price, :order_id)
+        params.require(:book).permit(:name, :author, :price)
     end
 
     def set_book
