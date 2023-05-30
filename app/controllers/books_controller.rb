@@ -10,11 +10,15 @@ class BooksController < ApplicationController
     end
 
     def create
-        @book = Book.new(book_params)
-        if @book.save
-            render json: @book, status: :ok
+        if @current_user.is_admin == true
+            @book = Book.new(book_params)
+            if @book.save
+                render json: @book, status: :ok
+            else
+                render json: {message: @book.errors.full_messages}, status: :unprocessable_entity
+            end
         else
-            render json: {message: @book.errors.full_messages}, status: :unprocessable_entity
+            render json: {message: "User do not have admin rights"}, status: :unauthorized
         end
     end
 
@@ -23,14 +27,22 @@ class BooksController < ApplicationController
     end
 
     def update
-        if @book.update!(book_params)
-            render json: {book: @book, message: 'book updated successfully'}, status: :ok
+        if @current_user.is_admin == true
+            if @book.update!(book_params)
+                render json: {book: @book, message: 'book updated successfully'}, status: :ok
+            end
+        else
+            render json: {message: "User do not have admin rights"}, status: :unauthorized
         end
     end
 
     def destroy
-        if @book.destroy
-            render json: {message: 'book deleted from the database'}, status: :ok
+        if @current_user.is_admin == true
+            if @book.destroy
+                render json: {message: 'book deleted from the database'}, status: :ok
+            end
+        else
+            render json: {message: "User do not have admin rights"}, status: :unauthorized
         end
     end
 
