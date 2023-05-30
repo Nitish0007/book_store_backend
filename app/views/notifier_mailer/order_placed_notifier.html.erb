@@ -1,0 +1,15 @@
+<html>
+  <head>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+  </head>
+  <body>
+    <h1>Hi <%= @user.username %>!</h1>
+    <h2>Your Order is placed successfully</h2>
+    <p>Order Details: </p>
+    <% @order.each do |order_item| %>
+       Book name: <%= order_item[:book_name] %>,
+       Quantity: <%= order_item[:quantity] %>,
+       Price(of one book) = Rs. <%= order_item[:price] %>
+    <% end %>
+  </body>
+</html>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2023_05_25_095914) do
+ActiveRecord::Schema.define(version: 2023_05_30_044329) do
 
   create_table "books", force: :cascade do |t|
     t.string "name"
@@ -20,20 +20,12 @@ ActiveRecord::Schema.define(version: 2023_05_25_095914) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
-  create_table "carts", force: :cascade do |t|
+  create_table "jtis", force: :cascade do |t|
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.integer "user_id"
-    t.index ["user_id"], name: "index_carts_on_user_id"
-  end
-
-  create_table "order_lists", force: :cascade do |t|
-    t.integer "order_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.integer "user_id"
-    t.index ["order_id"], name: "index_order_lists_on_order_id"
-    t.index ["user_id"], name: "index_order_lists_on_user_id"
+    t.string "key"
+    t.index ["user_id"], name: "index_jtis_on_user_id"
   end
 
   create_table "orders", force: :cascade do |t|
@@ -46,9 +38,7 @@ ActiveRecord::Schema.define(version: 2023_05_25_095914) do
     t.string "book_name"
     t.boolean "placed"
     t.integer "book_id"
-    t.integer "cart_id"
     t.index ["book_id"], name: "index_orders_on_book_id"
-    t.index ["cart_id"], name: "index_orders_on_cart_id"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
@@ -61,9 +51,6 @@ ActiveRecord::Schema.define(version: 2023_05_25_095914) do
     t.string "password_digest"
   end
 
-  add_foreign_key "carts", "users"
-  add_foreign_key "order_lists", "orders"
-  add_foreign_key "order_lists", "users"
-  add_foreign_key "orders", "carts"
+  add_foreign_key "jtis", "users"
   add_foreign_key "orders", "users"
 end

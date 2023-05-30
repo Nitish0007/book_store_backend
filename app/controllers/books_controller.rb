@@ -1,8 +1,8 @@
 class BooksController < ApplicationController
     before_action :authenticate_request, except: [:index, :show]
-    
-    before_action :book_params, only: :create
+    before_action :book_params, only: [:create, :update]
     before_action :set_book, only: [:show, :destroy, :update]
+    before_action :set_order, only: [:update_order, :delete_order]
 
     def index
         @books = Book.all
@@ -23,7 +23,9 @@ class BooksController < ApplicationController
     end
 
     def update
-
+        if @book.update!(book_params)
+            render json: {book: @book, message: 'book updated successfully'}, status: :ok
+        end
     end
 
     def destroy
@@ -32,14 +34,44 @@ class BooksController < ApplicationController
         end
     end
 
-    def add_to_cart
-        book = Book.find(params[:book_id])
-        order = Order.new({book_id: book.id, book_name: book.name, price: book.price, quantity: 1, total: book.price, placed: false, user_id: @current_user.id})
-        order.cart = @current_user.cart
-        if order.save
-            render json: {order: order, message: 'order created'}, status: :ok
+
+    def update_order
+        if params[:quantity] == 0
+            delete_order
         else
-            render json: {message: order.errors.full_messages}, status: :unprocessable_entity
+            quantity = params[:quantity]
+            total = @order.price * params[:quantity]
+            if @order.update!(total: total, quantity: quantity)
+                render json: {order: @order, message: 'order updated'}, status: :ok
+            else
+                render json: {message: @order.errors.full_messages}, status: :unprocessable_entity
+            end
+        end
+    end
+    
+    def delete_order
+        if @order.destroy
+            render json: {message: 'order removed from cart'}
+        end
+    end
+
+    def add_to_cart
+        user_orders = Order.where(user_id: @current_user.id, book_id: params[:book_id], placed: false)
+        prev_order = user_orders.find_by(book_id: params[:book_id]) if !user_orders.empty?
+
+        if prev_order
+            quantity = prev_order[:quantity] + 1;
+            total = prev_order[:price] + prev_order[:total]
+            prev_order.update!(total: total, quantity: quantity)
+            render json: {order: prev_order, message: 'successfully added to cart'}, status: :ok
+        else
+            book = Book.find(params[:book_id])
+            order = Order.new({book_id: book.id, book_name: book.name, price: book.price, quantity: 1, total: book.price, placed: false, user_id: @current_user.id})
+            if order.save
+                render json: {order: order, message: 'order created'}, status: :ok
+            else
+                render json: {message: order.errors.full_messages}, status: :unprocessable_entity
+            end
         end
     end
 
@@ -54,5 +86,10 @@ class BooksController < ApplicationController
     def set_book
         @book = Book.find(params[:id])
     end
+
+    def set_order
+        @order = Order.find(params[:order_id])
+    end
+
 
 end

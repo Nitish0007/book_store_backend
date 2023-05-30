@@ -1,7 +1,8 @@
 class UsersController < ApplicationController
     skip_before_action :authenticate_request, only: [:index, :create, :show]
-    before_action :set_user, only: [:show, :destroy, :get_cart, :get_order_list]
+    before_action :set_user, only: [:show, :destroy, :get_cart, :get_order_history]
 
+    
     # get method to fetch all the users from the database
     # route - {url}/users
     def index
@@ -13,8 +14,7 @@ class UsersController < ApplicationController
     # route - {url}/users
     def create
         @user = User.create(user_params)
-        token = jwt_encode(user_id: @user.id)
-        if create_dependencies
+        if @user.valid?
             render json: {user: @user, token: token}, status: :ok
         else
             render json: {message: @user.errors.full_messages}, status: :unprocessable_entity
@@ -44,13 +44,32 @@ class UsersController < ApplicationController
     end
 
     def get_cart
-        cart = @user.cart
-        render json: cart, status: :ok
+        @cart = Order.where(user_id: @current_user.id, placed: false)
+        if @cart
+            render json: @cart, status: :ok
+        else
+            render json: {message: @cart.errors.full_messages}, status: :unprocessable_entity
+        end
     end
 
-    def get_order_list
-        order_list = @user.order_list
-        render json: order_list, status: :ok
+    def checkout
+        cart = Order.where(user_id: @current_user.id, placed: false)
+        cart_data = cart.to_a
+        if cart.update_all(placed: true)
+            NotifierMailer.order_placed_notifier(@current_user.id, cart_data.to_json)
+            render json: {message: 'order placed successfully'}, status: :ok
+        end
+    end
+
+    def get_order_history
+        order_history = Order.select do |order|
+            (order.user_id = @user.id) && (order.placed == true)
+        end
+        if order_history
+            render json: order_history, status: :ok
+        else
+            render json: {message: order_history.errors.full_messages}, status: :unprocessable_entity
+        end
     end
 
 
@@ -65,10 +84,4 @@ class UsersController < ApplicationController
         @user = User.find(params[:id])
     end
 
-    def create_dependencies
-        @cart = Cart.new(user_id: @user.id)
-        @cart.save
-        @order_list = OrderList.new(user_id: @user.id)
-        @order_list.save
-    end
 end
