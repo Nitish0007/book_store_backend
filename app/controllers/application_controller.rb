@@ -10,12 +10,11 @@ class ApplicationController < ActionController::API
         header = header.split(" ")[1] if header
         begin
             decoded = jwt_decode(header)
-            is_token_invalid = Jti.exists?(key: decoded[:jti])
-            if is_token_invalid
-                render json: {message: 'Invalid Token'}, status: :unprocessable_entity
+            current_user = User.find(decoded[:user_id])
+            if current_user.jti_key == decoded[:jti_key]
+                @current_user = current_user
             else
-                @current_user = User.find(decoded[:user_id])
-                @jti = decoded[:jti]
+                render json: {message: 'Invalid Token'}, status: :unprocessable_entity
             end
         rescue ActiveRecord::RecordNotFound => e
             render json: {message: e.message}, status: :unauthorized

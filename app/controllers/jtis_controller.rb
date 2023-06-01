@@ -1,3 +1,0 @@
-class JtisController < ApplicationController
-    
-end

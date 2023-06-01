@@ -6,10 +6,12 @@
     <h1>Hi <%= @user.username %>!</h1>
     <h2>Your Order is placed successfully</h2>
     <p>Order Details: </p>
+   =begin
     <% @order.each do |order_item| %>
        Book name: <%= order_item[:book_name] %>,
        Quantity: <%= order_item[:quantity] %>,
        Price(of one book) = Rs. <%= order_item[:price] %>
     <% end %>
+    =end
   </body>
 </html>

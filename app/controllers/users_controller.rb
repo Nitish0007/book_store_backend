@@ -1,4 +1,7 @@
 class UsersController < ApplicationController
+
+    require 'securerandom'
+
     skip_before_action :authenticate_request, only: [:index, :create, :show]
     before_action :set_user, only: [:show, :destroy, :get_cart, :get_order_history]
 
@@ -15,7 +18,7 @@ class UsersController < ApplicationController
     def create
         @user = User.create(user_params)
         if @user.valid?
-            render json: {user: @user, token: token}, status: :ok
+            render json: {user: @user}, status: :ok
         else
             render json: {message: @user.errors.full_messages}, status: :unprocessable_entity
         end
@@ -56,7 +59,7 @@ class UsersController < ApplicationController
         cart = Order.where(user_id: @current_user.id, placed: false)
         cart_data = cart.to_a
         if cart.update_all(placed: true)
-            NotifierMailer.order_placed_notifier(@current_user.id, cart_data.to_json)
+            SendEmailWorkerJob.perform_async(@current_user.id, cart_data.to_json)
             render json: {message: 'order placed successfully'}, status: :ok
         end
     end
@@ -76,7 +79,9 @@ class UsersController < ApplicationController
     private
     # setting user params 
     def user_params
-        params.permit(:username, :email, :password, :is_admin)
+        jti_key = SecureRandom.uuid()
+        params[:jti_key] = jti_key
+        params.permit(:username, :email, :password, :is_admin, :jti_key)
     end
 
     # setting the current user before invokation of show and destroy methods
